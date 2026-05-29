@@ -1,0 +1,214 @@
+import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+
+export default function UserInfo() {
+  const navigate = useNavigate();
+  const [bots, setBots] = useState([]);
+
+  const getUserData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", user.email);
+
+    if (error) {
+      console.log(error);
+    } else {
+      setBots(data);
+    }
+  };
+
+  useEffect(() => {
+    getUserData();
+  }, []);
+
+  // ✅ DELETE FUNCTION (DB + STORAGE)
+  const handleDelete = async (bot) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this bot?");
+    if (!confirmDelete) return;
+
+    // 🔥 DELETE IMAGE FROM STORAGE
+    if (bot.menu) {
+      try {
+        const filePath = bot.menu.split("/menus/")[1];
+
+        await supabase.storage
+          .from("menus")
+          .remove([filePath]);
+      } catch (err) {
+        console.log("Image delete error:", err);
+      }
+    }
+
+    // 🔥 DELETE FROM DATABASE
+    const { error } = await supabase
+      .from("users")
+      .delete()
+      .eq("id", bot.id);
+
+    if (error) {
+      console.log(error);
+      alert("Delete failed ❌");
+    } else {
+      alert("Deleted successfully ✅");
+      getUserData();
+    }
+  };
+
+  return (
+    <div
+      className="min-h-screen bg-cover bg-center text-white relative"
+      style={{ backgroundImage: "url('/Land2.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/60"></div>
+
+      <Navbar />
+
+      <div className="relative z-10 px-10 pt-32 pb-20 text-center">
+        <h1 className="text-5xl font-bold mb-6">User Information</h1>
+
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 max-w-2xl mx-auto text-left">
+
+          <h2 className="text-2xl font-bold mb-4">Your Bots</h2>
+
+          {bots.length > 0 ? (
+            bots.map((bot) => (
+              <div key={bot.id} className="mb-6">
+
+                {/* 🔥 RESTAURANT BOT */}
+                {bot.restaurant_name && (
+                  <>
+                    <p className="text-white/80 mb-2">
+                      <strong>Restaurant Name:</strong> {bot.restaurant_name}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Location:</strong> {bot.location}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Open Days:</strong> {bot.open_days}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Open Time:</strong> {bot.open_time}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Close Time:</strong> {bot.close_time}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Info:</strong> {bot.info_restaurant}
+                    </p>
+
+                    {bot.menu && (
+                      <img
+                        src={bot.menu}
+                        alt="menu"
+                        className="mt-4 rounded-xl"
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* 🔥 CLINIC BOT */}
+                {bot.clinic_name && (
+                  <>
+                    <p className="text-white/80 mb-2">
+                      <strong>Clinic Name:</strong> {bot.clinic_name}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Specialty:</strong> {bot.clinic_specialty}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Location:</strong> {bot.clinic_location}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Days:</strong> {bot.clinic_days}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Open:</strong> {bot.clinic_open_time}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Close:</strong> {bot.clinic_close_time}
+                    </p>
+
+                    <p className="text-white/80 mb-2">
+                      <strong>Info:</strong> {bot.clinic_info}
+                    </p>
+                  </>
+                )}
+                {/* 🔥 GYM BOT */}
+{bot.gym_name && (
+  <>
+    <p className="text-white/80 mb-2">
+      <strong>Gym Name:</strong> {bot.gym_name}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Location:</strong> {bot.gym_location}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Days:</strong> {bot.gym_days}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Open:</strong> {bot.gym_open_time}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Close:</strong> {bot.gym_close_time}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Bundles:</strong> {bot.gym_bundles}
+    </p>
+
+    <p className="text-white/80 mb-2">
+      <strong>Info:</strong> {bot.gym_info}
+    </p>
+  </>
+)}
+
+                {/* 🔥 DELETE BUTTON */}
+                <button
+                  onClick={() => handleDelete(bot)}
+                  className="mt-4 bg-red-500 px-5 py-2 rounded-full hover:bg-red-600 transition"
+                >
+                  Delete Bot 🗑️
+                </button>
+
+                <hr className="my-6 border-white/20" />
+              </div>
+            ))
+          ) : (
+            <p className="text-white/70">No bots purchased yet.</p>
+          )}
+
+        </div>
+
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="bg-blue-500 px-8 py-3 rounded-full hover:scale-105 transition"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
