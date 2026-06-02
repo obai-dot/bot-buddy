@@ -12,8 +12,8 @@ export default function Clinic() {
   const [closeTime, setCloseTime] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [info, setInfo] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // ✅ VALIDATION
   const isClinicFormValid = () => {
     return (
       name.trim() &&
@@ -26,7 +26,7 @@ export default function Clinic() {
     );
   };
 
-  // ✅ PAYMENT + SAVE
+  // ---------------- PAYMENT + SAVE (FIXED) ----------------
   const handlePayment = async () => {
     if (!isClinicFormValid()) {
       alert("Please fill all clinic fields ❌");
@@ -42,6 +42,7 @@ export default function Clinic() {
 
     const userEmail = userData.user.email;
 
+    // 1. SAVE TO USERS TABLE
     const { error } = await supabase.from("users").insert([
       {
         clinic_name: name,
@@ -58,10 +59,27 @@ export default function Clinic() {
     if (error) {
       console.log(error);
       alert("Error ❌");
-    } else {
-      alert("Saved & Paid ✅");
-      setShowPayment(false);
+      return;
     }
+
+    // 2. 🔥 ADD NOTIFICATION (MISSING PART FIXED)
+    const { error: notifError } = await supabase
+      .from("notifications")
+      .insert([
+        {
+          message: `🟣 New clinic bot purchased by ${userEmail} (${name})`,
+        },
+      ]);
+
+    if (notifError) {
+      console.log("Notification error:", notifError);
+    }
+
+    // 3. UI UPDATE
+    setShowPayment(false);
+    setSuccessMessage(
+      "Purchase successful! We will email you shortly. Please send your Telegram details and email/calendar info to complete setup."
+    );
   };
 
   return (
@@ -141,6 +159,28 @@ export default function Clinic() {
               className="w-full mt-6 bg-blue-500 text-white py-3 rounded-full hover:scale-105 transition"
             >
               Pay Now
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS */}
+      {successMessage && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+          <div className="bg-white text-black p-6 rounded-2xl w-[380px] text-center shadow-2xl">
+
+            <h2 className="text-xl font-bold mb-3">Success ✅</h2>
+
+            <p className="text-sm leading-relaxed">
+              {successMessage}
+            </p>
+
+            <button
+              onClick={() => setSuccessMessage("")}
+              className="mt-5 bg-blue-500 text-white px-5 py-2 rounded-full hover:scale-105 transition"
+            >
+              OK
             </button>
 
           </div>

@@ -56,10 +56,39 @@ export default function UserInfo() {
       console.log(error);
       alert("Delete failed ❌");
     } else {
-      alert("Deleted successfully ✅");
-      getUserData();
-    }
+  await supabase.from("notifications").insert([
+    {
+      message: `🔴 Bot deleted by ${bot.email} (${bot.restaurant_name || bot.clinic_name || bot.gym_name})`,
+    },
+  ]);
+
+  alert("Deleted successfully ✅");
+  getUserData();
+}
   };
+  const getTimeLeft = (createdAt) => {
+  const endTime = new Date(createdAt);
+  endTime.setDate(endTime.getDate() + 30); // 30 days from creation
+
+  const now = new Date();
+  const diff = endTime - now;
+
+  if (diff <= 0) return "Expired ❌";
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+  return `${days} days : ${hours} hours : ${minutes} min`;
+};const [now, setNow] = useState(Date.now());
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    setNow(Date.now());
+  }, 60000); // update every 1 minute
+
+  return () => clearInterval(interval);
+}, []);
 
   return (
     <div
@@ -115,6 +144,9 @@ export default function UserInfo() {
                         className="mt-4 rounded-xl"
                       />
                     )}
+                    <p className="text-green-400 font-bold mt-3">
+  Subscription Left: {getTimeLeft(bot.created_at)}
+</p>
                   </>
                 )}
 
@@ -148,6 +180,9 @@ export default function UserInfo() {
                     <p className="text-white/80 mb-2">
                       <strong>Info:</strong> {bot.clinic_info}
                     </p>
+                    <p className="text-green-400 font-bold mt-3">
+  Subscription Left: {getTimeLeft(bot.created_at)}
+</p>
                   </>
                 )}
                 {/* 🔥 GYM BOT */}
@@ -180,6 +215,9 @@ export default function UserInfo() {
     <p className="text-white/80 mb-2">
       <strong>Info:</strong> {bot.gym_info}
     </p>
+    <p className="text-green-400 font-bold mt-3">
+  Subscription Left: {getTimeLeft(bot.created_at)}
+</p>
   </>
 )}
 

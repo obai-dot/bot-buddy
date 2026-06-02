@@ -5,7 +5,6 @@ import { supabase } from "../lib/supabase";
 export default function Gym() {
   const [showPayment, setShowPayment] = useState(false);
 
-  // 🔥 STATE
   const [gymName, setGymName] = useState("");
   const [location, setLocation] = useState("");
   const [days, setDays] = useState("");
@@ -13,8 +12,8 @@ export default function Gym() {
   const [closeTime, setCloseTime] = useState("");
   const [bundles, setBundles] = useState("");
   const [info, setInfo] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // ✅ VALIDATION (GYM ONLY)
   const isGymFormValid = () => {
     return (
       gymName.trim() &&
@@ -27,7 +26,7 @@ export default function Gym() {
     );
   };
 
-  // 🔥 SAVE TO DB
+  // 🔥 SAVE TO DB + NOTIFICATION FIXED
   const handlePurchase = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -52,10 +51,26 @@ export default function Gym() {
     if (error) {
       console.log(error);
       alert("Error saving ❌");
-    } else {
-      alert("Gym bot created ✅");
-      setShowPayment(false);
+      return;
     }
+
+    // 🔥 THIS IS THE MISSING PART (NOTIFICATION)
+    const { error: notifError } = await supabase
+      .from("notifications")
+      .insert([
+        {
+          message: `🟢 New gym bot purchased by ${user.email} (${gymName})`,
+        },
+      ]);
+
+    if (notifError) {
+      console.log("Notification error:", notifError);
+    }
+
+    setShowPayment(false);
+    setSuccessMessage(
+      "Purchase successful! We will email you shortly. Please send your Telegram details and email/calendar info to complete setup."
+    );
   };
 
   return (
@@ -83,7 +98,6 @@ export default function Gym() {
 
       </FormLayout>
 
-      {/* PURCHASE BUTTON */}
       <div className="absolute right-[320px] top-1/2 -translate-y-1/2 z-50">
         <button
           onClick={() => {
@@ -104,7 +118,6 @@ export default function Gym() {
         </button>
       </div>
 
-      {/* PAYMENT POPUP */}
       {showPayment && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999]">
 
@@ -140,6 +153,28 @@ export default function Gym() {
           </div>
         </div>
       )}
+
+      {successMessage && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+          <div className="bg-white text-black p-6 rounded-2xl w-[380px] text-center shadow-2xl">
+
+            <h2 className="text-xl font-bold mb-3">Success ✅</h2>
+
+            <p className="text-sm leading-relaxed">
+              {successMessage}
+            </p>
+
+            <button
+              onClick={() => setSuccessMessage("")}
+              className="mt-5 bg-blue-500 text-white px-5 py-2 rounded-full hover:scale-105 transition"
+            >
+              OK
+            </button>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

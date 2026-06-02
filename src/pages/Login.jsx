@@ -85,16 +85,20 @@ export default function Login() {
           <p className="text-white/70 mb-6">Happy to serve you again</p>
 
           <input
-            className="w-full mb-4 p-3 rounded bg-white/10 border border-white/20 outline-none"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+  type="email"
+  autoComplete="off"
+  className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
+  placeholder="Email"
+  onChange={(e) => setEmail(e.target.value)}
+/>
 
-          <input
-            className="w-full mb-6 p-3 rounded bg-white/10 border border-white/20 outline-none"
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <input
+  type="password"
+  autoComplete="new-password"
+  className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
+  placeholder="Password"
+  onChange={(e) => setPassword(e.target.value)}
+/>
 
           <button
             onClick={handleLogin}

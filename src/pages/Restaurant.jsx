@@ -15,6 +15,7 @@ export default function Restaurant() {
   const [closeTime, setCloseTime] = useState("");
 
   const [restaurants, setRestaurants] = useState([]);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // ✅ VALIDATION
   const isRestaurantFormValid = () => {
@@ -101,9 +102,19 @@ export default function Restaurant() {
       console.log(error);
       alert("Error ❌");
     } else {
-      alert("Saved & Paid ✅");
-      setShowPayment(false);
-    }
+  // ✅ SAVE NOTIFICATION TO ADMIN
+  await supabase.from("notifications").insert([
+    {
+      message: `🟢 New bot purchased by ${userEmail} (${name})`,
+    },
+  ]);
+
+  setShowPayment(false);
+
+  setSuccessMessage(
+    "Purchase successful! We will email you shortly. Please send your Telegram details and email/calendar info to complete setup."
+  );
+}
   };
 
   return (
@@ -222,9 +233,33 @@ export default function Restaurant() {
               Pay Now
             </button>
 
+
           </div>
         </div>
       )}
+      {successMessage && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+    
+    <div className="bg-white text-black p-6 rounded-2xl w-[380px] text-center shadow-2xl">
+
+      <h2 className="text-xl font-bold mb-3">Success ✅</h2>
+
+      <p className="text-sm leading-relaxed">
+        {successMessage}
+      </p>
+
+      <button
+        onClick={() => setSuccessMessage("")}
+        className="mt-5 bg-blue-500 text-white px-5 py-2 rounded-full hover:scale-105 transition"
+      >
+        OK
+      </button>
+      
+
+    </div>
+
+  </div>
+)}
 
     </div>
   );

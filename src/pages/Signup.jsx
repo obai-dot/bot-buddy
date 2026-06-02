@@ -10,6 +10,8 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
 
   // ❌ REMOVED FAKE LOGOUT (THIS WAS BREAKING EVERYTHING)
 
@@ -19,29 +21,38 @@ export default function Signup() {
   };
 
   // ✅ FIXED SIGNUP
-  const handleSignup = async () => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
+ const handleSignup = async () => {
+  if (password.length < 8) {
+    alert("Password must be at least 8 characters long.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Passwords do not match.");
+    return;
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName
       }
-    });
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Account created ✅");
-
-      // ✅ MAKE STATE CONSISTENT
-      localStorage.setItem("isLoggedIn", "false");
-      localStorage.removeItem("isAdmin");
-
-      handleTransition();
     }
-  };
+  });
+
+  if (error) {
+    alert(error.message);
+  } else {
+    alert("Account created ✅");
+
+    localStorage.setItem("isLoggedIn", "false");
+    localStorage.removeItem("isAdmin");
+
+    handleTransition();
+  }
+};
 
   useEffect(() => {
     const trigger = () => {
@@ -113,22 +124,32 @@ export default function Signup() {
             onChange={(e) => setFullName(e.target.value)}
           />
 
-          <input
-            className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <input
+  type="email"
+  autoComplete="off"
+  className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
+  placeholder="Email"
+  onChange={(e) => setEmail(e.target.value)}
+/>
+
+    <input
+  type="password"
+  autoComplete="new-password"
+  className="w-full mb-6 p-3 rounded bg-white/10 border border-white/20"
+  placeholder="Confirm Password"
+  onChange={(e) => setConfirmPassword(e.target.value)}
+/>
+
+<p className="text-xs text-white/60 mb-3">
+  Password must be at least 8 characters long
+</p>
 
           <input
-            className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <input
-            className="w-full mb-6 p-3 rounded bg-white/10 border border-white/20"
-            placeholder="Confirm Password"
-          />
+  type="password"
+  className="w-full mb-6 p-3 rounded bg-white/10 border border-white/20"
+  placeholder="Confirm Password"
+  onChange={(e) => setConfirmPassword(e.target.value)}
+/>
 
           <button
             onClick={handleSignup}
