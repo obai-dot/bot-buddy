@@ -96,18 +96,43 @@ export default function AdminDashboard() {
 
   // ---------------- DELETE BOT ----------------
   const handleDelete = async (bot) => {
-    if (!window.confirm("Delete this bot?")) return;
+  if (!window.confirm("Delete this bot?")) return;
 
-    const { error } = await supabase
-      .from("users")
-      .delete()
-      .eq("id", bot.id);
+  // 1. DELETE FIRST (and CHECK RESULT PROPERLY)
+  const { data, error } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", bot.id)
+    .select(); // IMPORTANT: ensures delete actually happened
 
-    if (!error) {
-      await addNotification(`🔴 Bot deleted: ${bot.email}`);
-      fetchBots();
-    }
-  };
+  // 2. HARD CHECK ERROR
+  if (error) {
+    console.log("DELETE ERROR:", error);
+    alert("Delete failed ❌: " + error.message);
+    return;
+  }
+
+  // 3. CHECK IF ANY ROW WAS ACTUALLY DELETED
+  if (!data || data.length === 0) {
+    console.log("NO ROW DELETED (possible RLS issue)");
+    alert("Delete failed ❌ (no permission or not found)");
+    return;
+  }
+
+  // 4. ONLY NOW add notification
+  const { error: notifError } = await supabase
+    .from("notifications")
+    .insert([
+      { message: `🔴 Bot deleted: ${bot.email}` }
+    ]);
+
+  if (notifError) {
+    console.log("NOTIFICATION ERROR:", notifError);
+  }
+
+  // 5. refresh UI
+  fetchBots();
+};
 
   // ---------------- DELETE MESSAGE ----------------
   const handleDeleteMessage = async (message) => {
@@ -172,23 +197,70 @@ export default function AdminDashboard() {
       <h2 className="text-2xl mb-4">Bots</h2>
 
       {filteredBots.map((b) => (
-        <div key={b.id} className="bg-white/10 p-5 rounded-xl mb-4">
+  <div key={b.id} className="bg-white/10 p-5 rounded-xl mb-4">
 
-          <p><strong>Email:</strong> {b.email}</p>
+    <p><strong>Email:</strong> {b.email}</p>
 
-          <p className="text-green-400">
-            Subscription: {getTimeLeft(b.created_at)}
-          </p>
+    {/* RESTAURANT */}
+    {b.restaurant_name && (
+      <>
+        <p><strong>Restaurant:</strong> {b.restaurant_name}</p>
+        <p><strong>Location:</strong> {b.location}</p>
+        <p><strong>Open Days:</strong> {b.open_days}</p>
+        <p><strong>Open Time:</strong> {b.open_time}</p>
+        <p><strong>Close Time:</strong> {b.close_time}</p>
+        <p><strong>Info:</strong> {b.info_restaurant}</p>
 
-          <button
-            onClick={() => handleDelete(b)}
-            className="mt-3 bg-red-500 px-4 py-2 rounded"
-          >
-            Delete Bot
-          </button>
+        {b.menu && (
+          <div className="mt-3">
+            <strong>Menu:</strong>
+            <div className="bg-white/5 p-3 rounded mt-1 whitespace-pre-wrap">
+              {b.menu}
+            </div>
+          </div>
+        )}
+      </>
+    )}
 
-        </div>
-      ))}
+    {/* CLINIC */}
+    {b.clinic_name && (
+      <>
+        <p><strong>Clinic:</strong> {b.clinic_name}</p>
+        <p><strong>Specialty:</strong> {b.clinic_specialty}</p>
+        <p><strong>Location:</strong> {b.clinic_location}</p>
+        <p><strong>Days:</strong> {b.clinic_days}</p>
+        <p><strong>Open:</strong> {b.clinic_open_time}</p>
+        <p><strong>Close:</strong> {b.clinic_close_time}</p>
+        <p><strong>Info:</strong> {b.clinic_info}</p>
+      </>
+    )}
+
+    {/* GYM */}
+    {b.gym_name && (
+      <>
+        <p><strong>Gym:</strong> {b.gym_name}</p>
+        <p><strong>Location:</strong> {b.gym_location}</p>
+        <p><strong>Days:</strong> {b.gym_days}</p>
+        <p><strong>Open:</strong> {b.gym_open_time}</p>
+        <p><strong>Close:</strong> {b.gym_close_time}</p>
+        <p><strong>Bundles:</strong> {b.gym_bundles}</p>
+        <p><strong>Info:</strong> {b.gym_info}</p>
+      </>
+    )}
+
+    <p className="text-green-400 mt-3">
+      Subscription: {getTimeLeft(b.created_at)}
+    </p>
+
+    <button
+      onClick={() => handleDelete(b)}
+      className="mt-3 bg-red-500 px-4 py-2 rounded"
+    >
+      Delete Bot
+    </button>
+
+  </div>
+))}
 
       {/* MESSAGES */}
       <h2 className="text-2xl mt-8 mb-4">Messages</h2>
