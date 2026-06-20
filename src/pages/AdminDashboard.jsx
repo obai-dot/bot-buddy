@@ -169,8 +169,11 @@ export default function AdminDashboard() {
 
   return (
 <div
-  className="min-h-screen text-white p-10 bg-cover bg-center bg-no-repeat"
-  style={{ backgroundImage: "url('/adminbg.jpg')" }}
+  className="min-h-screen text-white p-10 bg-center bg-no-repeat bg-fixed"
+  style={{
+    backgroundImage: "url('/adminbg.jpeg')",
+    backgroundSize: "130% auto",
+  }}
 >
       <h1 className="text-4xl mb-6">Admin Dashboard</h1>
 
